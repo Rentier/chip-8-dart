@@ -9,7 +9,7 @@ main() {
   group('Chip-8 interpreter:', () {
     
     setUp(() {
-      interpreter = new Chip8();      
+      interpreter = new Interpreter();      
     });
 
     tearDown(() {
@@ -43,6 +43,11 @@ main() {
     
     test("Interpreter has stack pointer", () {
       expect(interpreter.stackPointer, isNotNull);
+    });
+    
+    test("Interpreter can extract nibbles from opcodes properly", () {
+      interpreter.extractNibble(0xABCD);
+      expect(interpreter, isNotNull);
     });
     
     
