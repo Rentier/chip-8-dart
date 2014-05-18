@@ -149,7 +149,7 @@ main() {
     
     // 0x9nnn
     
-    test("Disassembler decodes SHL", () {
+    test("Disassembler decodes SNE", () {
       expect(disasm.decode(0x9AB0), Mnemonics.SNE);
       expect(disasm.X, 0xA);      
       expect(disasm.Y, 0xB);
@@ -164,17 +164,90 @@ main() {
     
     // 0xBnnn
     
-    test("Disassembler decodes LDINSTR", () {
+    test("Disassembler decodes JPREL", () {
       expect(disasm.decode(0xBBCD), Mnemonics.JPREL);
       expect(disasm.NNN, 0xBCD);      
     });
     
-    // 0xBnnn
+    // 0xCnnn
     
     test("Disassembler decodes RND", () {
-      expect(disasm.decode(0xBBCD), Mnemonics.RND);
-      expect(disasm.NNN, 0xBCD);      
+      expect(disasm.decode(0xCDEF), Mnemonics.RND);
+      expect(disasm.X, 0xD);      
+      expect(disasm.KK, 0xEF);
     });
+    
+    // 0xDnnn
+    
+    test("Disassembler decodes DRW", () {
+      expect(disasm.decode(0xDABC), Mnemonics.DRW);
+      expect(disasm.X, 0xA);      
+      expect(disasm.Y, 0xB);
+      expect(disasm.N, 0xC);
+    });
+    
+    // 0xEnnn
+    
+    test("Disassembler decodes SKP", () {
+      expect(disasm.decode(0xE39E), Mnemonics.SKP);
+      expect(disasm.X, 0x3);
+    });
+    
+    test("Disassembler decodes SKNP", () {
+      expect(disasm.decode(0xE3A1), Mnemonics.SKNP);
+      expect(disasm.X, 0x3);
+    });
+    
+    // 0xFnnn
+    
+    test("Disassembler decodes LDDT", () {
+      expect(disasm.decode(0xFE07), Mnemonics.LDDT);
+      expect(disasm.X, 0xE);
+    });
+    
+    test("Disassembler decodes LDKEY", () {
+      expect(disasm.decode(0xFE0A), Mnemonics.LDKEY);
+      expect(disasm.X, 0xE);
+    });
+    
+    test("Disassembler decodes SETDT", () {
+      expect(disasm.decode(0xFE15), Mnemonics.SETDT);
+      expect(disasm.X, 0xE);
+    });
+    
+    test("Disassembler decodes SETSOUND", () {
+      expect(disasm.decode(0xFE18), Mnemonics.SETSOUND);
+      expect(disasm.X, 0xE);
+    });
+    
+    test("Disassembler decodes ADDI", () {
+      expect(disasm.decode(0xFB1E), Mnemonics.ADDI);
+      expect(disasm.X, 0xB);
+    });
+    
+    test("Disassembler decodes LDSPRITE", () {
+      expect(disasm.decode(0xFC29), Mnemonics.LDSPRITE);
+      expect(disasm.X, 0xC);
+    });
+    
+    test("Disassembler decodes LDBCD", () {
+      expect(disasm.decode(0xFD33), Mnemonics.LDBCD);
+      expect(disasm.X, 0xD);
+    });
+    
+    test("Disassembler decodes PUSH", () {
+      expect(disasm.decode(0xFE55), Mnemonics.PUSH);
+      expect(disasm.X, 0xE);
+    });
+    
+    test("Disassembler decodes POP", () {
+      expect(disasm.decode(0xFF65), Mnemonics.POP);
+      expect(disasm.X, 0xF);
+    });
+    
+    
+    
+    
     
   });
     

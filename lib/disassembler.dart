@@ -46,6 +46,10 @@ class Disassembler {
         return Mnemonics.SNE;
       case 0xA: return Mnemonics.LDINSTR;
       case 0xB: return Mnemonics.JPREL;
+      case 0xC: return Mnemonics.RND;
+      case 0xD: return Mnemonics.DRW;
+      case 0xE: return decodeECode(opcode);
+      case 0xF: return decodeFCode(opcode);
       default: invalidOpcode(opcode);
     }
    }
@@ -75,8 +79,33 @@ class Disassembler {
      }
    }
    
+   decodeECode(int opcode) {
+     assert(H == 0xE);
+     switch(KK) {
+       case 0x9E:  return Mnemonics.SKP;
+       case 0xA1:  return Mnemonics.SKNP;
+       default: invalidOpcode(opcode);
+     }
+   }
+   
+   decodeFCode(int opcode) {
+     assert(H == 0xF);
+     switch(KK) {
+       case 0x07:  return Mnemonics.LDDT;
+       case 0x0A:  return Mnemonics.LDKEY;
+       case 0x15:  return Mnemonics.SETDT;
+       case 0x18:  return Mnemonics.SETSOUND;
+       case 0x1E:  return Mnemonics.ADDI;
+       case 0x29:  return Mnemonics.LDSPRITE;
+       case 0x33:  return Mnemonics.LDBCD;
+       case 0x55:  return Mnemonics.PUSH;
+       case 0x65:  return Mnemonics.POP;
+       default: invalidOpcode(opcode);
+     }
+   }
+   
    invalidOpcode(int opcode) {
-     print("Invalid opcode: 0x" + opcode.toRadixString(16));
+     throw("Invalid opcode: 0x" + opcode.toRadixString(16));
    }
 }
 

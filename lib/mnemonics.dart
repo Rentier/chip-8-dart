@@ -42,5 +42,23 @@ class Mnemonics {
     
     static const RND = const Mnemonics._internal('RND');
     
+    static const DRW = const Mnemonics._internal('DRW');
+    
+    static const SKP = const Mnemonics._internal('SKP');
+    static const SKNP = const Mnemonics._internal('SKNP');
+    
+    static const LDDT = const Mnemonics._internal('LDDT');
+    static const LDKEY = const Mnemonics._internal('LDKEY');
+    static const SETDT = const Mnemonics._internal('SETDT');
+    static const SETSOUND = const Mnemonics._internal('SETSOUND');
+    static const ADDI = const Mnemonics._internal('ADDI');
+    static const LDSPRITE = const Mnemonics._internal('LDSPRITE');
+    static const LDBCD = const Mnemonics._internal('LDBCD');
+    static const PUSH = const Mnemonics._internal('PUSH');
+    static const POP = const Mnemonics._internal('POP');
+    
+    
+    
+    
     
 }
