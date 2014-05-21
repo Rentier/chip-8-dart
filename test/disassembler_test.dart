@@ -7,7 +7,7 @@ main() {
   group('Chip-8 disassembler:', () {
     
     setUp(() {
-      disasm = new Disassembler();      
+      disasm = new Disassembler();
     });
 
     tearDown(() {
@@ -26,16 +26,20 @@ main() {
     
     // 0x0nnn
     
-    test("Disassembler decodes SYS", () {
-      expect(disasm.decode(0x0ABC), Mnemonics.SYS);
-    });
+    group('0x0NNN', () {
     
-    test("Disassembler decodes CLS", () {     
-      expect( disasm.decode(0x00E0), Mnemonics.CLS);
-    });
+      test("Disassembler decodes SYS", () {
+        expect(disasm.decode(0x0ABC), Mnemonics.SYS);
+      });
+      
+      test("Disassembler decodes CLS", () {     
+        expect( disasm.decode(0x00E0), Mnemonics.CLS);
+      });
+      
+      test("Disassembler decodes RET", () {
+        expect(disasm.decode(0x00EE), Mnemonics.RET);
+      });
     
-    test("Disassembler decodes RET", () {
-      expect(disasm.decode(0x00EE), Mnemonics.RET);
     });
     
     // 0x1nnn
@@ -198,7 +202,7 @@ main() {
       expect(disasm.X, 0x3);
     });
     
-    // 0xFnnn
+    // 0xFxkk
     
     test("Disassembler decodes LDDT", () {
       expect(disasm.decode(0xFE07), Mnemonics.LDDT);

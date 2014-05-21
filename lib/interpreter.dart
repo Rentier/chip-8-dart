@@ -3,6 +3,8 @@ part of chip8;
 class Interpreter {
   // http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
   
+  Disassembler disasm;
+  
   /*
    * Storage place for the 4 nibbles which represent
    * an decoded opcode
@@ -23,7 +25,7 @@ class Interpreter {
    * usually referred to as Vx, where x is a 
    * hexadecimal digit (0 through F).
    */
-  ByteBuffer registers;
+  Uint8ClampedList registers;
   
   /*
    * There is also a 16-bit register called I. This register 
@@ -55,20 +57,163 @@ class Interpreter {
    */
   int stackPointer;
   
+  InstanceMirror mirror;
+  
   Interpreter() {
-    ram = new Uint8List(4096).buffer;
-    registers = new Uint8List(16).buffer;
+    disasm = new Disassembler();
+    ram = new Uint16List(4096).buffer;
+    registers = new Uint8ClampedList(16);
     iRegister = 0;    
     delayTimerRegister = 0;
     soundTimerRegister = 0;
     programCounter = 0;
     stackPointer = 0;
+    mirror = reflect(this);
+  }  
+  
+  void exec(int opcode) {
+    Mnemonics m = disasm.decode(opcode);
+    Symbol s = new Symbol(getMethodName(m));
+    mirror.invoke(s, []);
   }
   
-  decodeAndDispatch() {
-    
+  String getMethodName(Mnemonics m) {
+    return "handle_" + m._value;
   }
   
+  int x() {
+    return disasm.X;
+  }
   
+  int y() {
+    return disasm.Y;
+  }
+  
+  int Vx() {
+    return registers[x()];  
+  }
+  
+  int Vy() {
+    return registers[disasm.Y];  
+  }
+  
+  int kk() {
+    return disasm.KK;
+  }
+  
+  void skip_instruction(){
+    programCounter += 2;
+  }
+
+  // 0x1NNN
+
+  /*
+   * Jump to location nnn.
+   */
+  void handle_JPABS() {
+    programCounter = disasm.NNN;
+  }
+  
+  // 0x2NNN
+  
+  // 0x3NNN
+  
+  /**
+   * Skip next instruction if Vx = kk.
+   */
+  void handle_SEBYTE() {
+    if(Vx() == kk()) {
+      skip_instruction(); 
+    }
+  }
+  
+  // 0x4NNN
+  
+  /**
+   * Skip next instruction if Vx != kk.
+   */
+  void handle_SNEBYTE() {
+    if(Vx() != kk()) {
+      skip_instruction();
+    }
+  }
+  
+  // 0x5NNN
+  
+  /**
+   * Skip next instruction if Vx = Vy.
+   */
+  void handle_SEREGISTER() {
+    if(Vx() == Vy()) {
+      skip_instruction();
+    }
+  }
+  
+  // 0x6NNN
+  
+  /*
+   * Set Vx = kk.
+   */
+  void handle_LDBYTE() {
+    registers[x()] = disasm.KK;
+  }
+  
+  // 0x7NNN
+  
+  /**
+   * Set Vx = Vx + kk.
+   */
+  void handle_ADDBYTE() {
+    registers[x()] = registers[x()] + kk();
+  }
+  
+  // 0x8NNN
+  
+  /**
+   * Set Vx = Vy.
+   */
+  void handle_LDREGISTER() {
+    registers[x()] = registers[y()];
+  }
+  
+  /**
+   * Set Vx = Vx OR Vy.
+   */
+  void handle_OR() {
+    registers[x()] = registers[x()] | registers[y()];
+  }
+  
+  /**
+   * Set Vx = Vx AND Vy.
+   */
+  void handle_AND() {
+    registers[x()] = registers[x()] & registers[y()];
+  }
+  
+  /**
+   * Set Vx = Vx XOR Vy.
+   */
+  void handle_XOR() {
+    registers[x()] = registers[x()] ^ registers[y()];
+  }
+  
+  /**
+   * Set Vx = Vx + Vy, set VF = carry.
+   */
+  void handle_ADDREGISTER() {    
+    int sum = registers[x()] + registers[y()];
+    registers[x()] = sum;    
+    registers[0xF] = sum > 0xFF ? 1 : 0;    
+  }
+  
+  /**
+   * Set Vx = Vx - Vy, set VF = NOT borrow.
+   */
+  void handle_SUB() {    
+    registers[0xF] = registers[x()] > registers[y()] ? 1 : 0;
+    registers[x()] = registers[x()] - registers[y()];
+  }
+
+
   
 }
