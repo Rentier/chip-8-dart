@@ -6,13 +6,7 @@ class Interpreter {
   Disassembler disasm;
   
   Display display;
-  
-  /*
-   * Storage place for the 4 nibbles which represent
-   * an decoded opcode
-   */
-  ByteBuffer nibbles;
-  
+   
   /*
    * The Chip-8 language is capable of accessing up to 4KB 
    * (4,096 bytes) of RAM, from location 0x000 (0) to 0xFFF 
@@ -20,7 +14,7 @@ class Interpreter {
    *  where the original interpreter was located, and should 
    *  not be used by programs.
    */
-  ByteData ram;
+  Uint8List ram;
   
   /*
    * Chip-8 has 16 general purpose 8-bit registers, 
@@ -103,10 +97,9 @@ class Interpreter {
   }
   
   initRam() {
-    var ram_buffer = new Uint16List(4096).buffer;
-    ram = new ByteData.view(ram_buffer);
+    ram = new Uint8List(4096);
     for(int i = 0; i < CHIP8_FONTSET.length; i++) {
-      ram.setUint8(i, CHIP8_FONTSET[i]);
+      ram[i] =  CHIP8_FONTSET[i];
     }
   }
   
@@ -344,7 +337,7 @@ class Interpreter {
    */
   void handle_DRW() {
     for(int y = 0; y < n(); y++) {
-      int b = ram.getUint8(iRegister + y);
+      int b = ram[iRegister + y];
       List<bool> bits = getBits(b);
       
       for(int x = 0; x < 8; x++) {
@@ -429,9 +422,9 @@ class Interpreter {
     }
     bcd[0] = x;
     
-    ram.setUint8(iRegister,     bcd[0]);
-    ram.setUint8(iRegister + 1, bcd[1]);
-    ram.setUint8(iRegister + 2, bcd[2]);
+    ram[iRegister] = bcd[0];
+    ram[iRegister+1] = bcd[1];
+    ram[iRegister+2] = bcd[2];
   }
 
   /**
@@ -439,7 +432,16 @@ class Interpreter {
    */
   void handle_PUSH() {   
     for(int i = 0; i <= x(); i++) {
-      ram.setUint8(iRegister + i, registers[i]);  
+      ram[iRegister + i] = registers[i];  
+    }
+  }
+  
+  /**
+   * Store registers V0 through Vx in memory starting at location I.
+   */
+  void handle_POP() {   
+    for(int i = 0; i <= x(); i++) {
+      registers[i] = ram[iRegister + i];  
     }
   }
   

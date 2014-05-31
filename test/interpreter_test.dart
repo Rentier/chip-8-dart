@@ -343,8 +343,8 @@ test_interpreter() {
       int I = 42;
       
       interpreter.iRegister = I;
-      interpreter.ram.setUint8(I, 0x3C);
-      interpreter.ram.setUint8(I + 1, 0xC3);
+      interpreter.ram[I] =  0x3C;
+      interpreter.ram[I+1] =  0xC3;
       
       interpreter.exec(0xD003);
           
@@ -463,9 +463,9 @@ test_interpreter() {
 
       interpreter.exec(0xF433);   
       
-      expect(interpreter.ram.getUint8(I), 2);
-      expect(interpreter.ram.getUint8(I+1), 6);
-      expect(interpreter.ram.getUint8(I+2), 1);
+      expect(interpreter.ram[I], 2);
+      expect(interpreter.ram[I+1], 6);
+      expect(interpreter.ram[I+2], 1);
     });    
   });
   
@@ -485,13 +485,33 @@ test_interpreter() {
       
       interpreter.exec(0xF355);
       
-      expect(interpreter.ram.getUint8(I), A);
-      expect(interpreter.ram.getUint8(I+1), B);
-      expect(interpreter.ram.getUint8(I+2), C);
-      expect(interpreter.ram.getUint8(I+3), D);
+      expect(interpreter.ram[I], A);
+      expect(interpreter.ram[I+1], B);
+      expect(interpreter.ram[I+2], C);
+      expect(interpreter.ram[I+3], D);
+    });  
+  });
+  
+  group('should handle POP', () {    
+    test("write values in ram and pop them into registers", () {
+      int A = 0x42, 
+          B = 0x23, 
+          C = 0xAB,
+          D = 0x01,
+          I = 0x200;      
       
+      interpreter.iRegister = I;
+      interpreter.ram[I] = A;
+      interpreter.ram[I+1] = B;
+      interpreter.ram[I+2] = C;
+      interpreter.ram[I+3] = D;
       
+      interpreter.exec(0xF365);
       
+      expect(interpreter.registers[0], A);
+      expect(interpreter.registers[1], B);
+      expect(interpreter.registers[2], C);
+      expect(interpreter.registers[3], D);
     });  
   });
   

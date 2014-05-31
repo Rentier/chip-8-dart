@@ -20,11 +20,12 @@ void main() {
   int I = 42;
   
   interpreter.iRegister = I;
-  interpreter.ram.setUint8(I, 0xF0);
-  interpreter.ram.setUint8(I + 1, 0x90);
-  interpreter.ram.setUint8(I + 2, 0x90);
-  interpreter.ram.setUint8(I + 3, 0x90);
-  interpreter.ram.setUint8(I + 4, 0xF0);
+  
+  interpreter.ram[I] = 0xF0;
+  interpreter.ram[I + 1] = 0x90;
+  interpreter.ram[I + 2] = 0x90;
+  interpreter.ram[I + 3] = 0x90;
+  interpreter.ram[I + 4] = 0xF0;
 
   interpreter.exec(0xD005);
 
