@@ -394,4 +394,47 @@ class Interpreter {
   void handle_SETSOUND() {
     soundTimer = Vx();  
   }
+  
+  /**
+   * Set I = I + Vx.
+   */
+  void handle_ADDI() {    
+    iRegister += Vx();  
+  }  
+
+  /**
+   * Store BCD representation of Vx in memory locations I, I+1, and I+2.
+   */
+  void handle_LDBCD() {   
+    // http://www.dragonwins.com/domains/getteched/de248/bin2bcd.htm
+    
+    int DIGITS = 3;
+    int VMAX = 100;
+    
+    List<int> bcd = new List<int>(3);
+    
+    int x = Vx();
+    print("Foo");
+    print(x);
+    
+    int i = DIGITS-1;
+    int v = VMAX;
+    while (i > 0)
+    {
+        bcd[i] = 0;
+        while (x >= v)
+        {
+            x = x - v;
+            bcd[i] = bcd[i] + 1;
+        }
+        v = v ~/ 10;
+        i = i - 1;
+    }
+    bcd[0] = x;
+    print(bcd);
+    
+    ram.setUint8(iRegister,     bcd[0]);
+    ram.setUint8(iRegister + 1, bcd[1]);
+    ram.setUint8(iRegister + 2, bcd[2]);
+  }
 }

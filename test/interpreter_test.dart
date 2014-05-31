@@ -440,6 +440,35 @@ test_interpreter() {
     });  
   });
   
+  group('should handle ADDI', () {    
+    test("V4(0x42) + I(0x8) -> I", () {
+      interpreter.registers[4] = 0x42;
+      interpreter.iRegister = 0x8;      
+      interpreter.exec(0xF41E);      
+      expect(interpreter.iRegister, 0x4A);
+    });    
+  });  
+  
+  skip_group('should handle LDSPRITE', () {    
+    test("should be tested", () {
+      fail('Not yet implemented');
+    });  
+  });
+  
+  group('should handle LDBCD', () {    
+    test("162 -> 1 6 2", () {
+      interpreter.registers[4] = 162;
+      int I = 0x200;
+      interpreter.iRegister = I;
+
+      interpreter.exec(0xF433);   
+      
+      expect(interpreter.ram.getUint8(I), 2);
+      expect(interpreter.ram.getUint8(I+1), 6);
+      expect(interpreter.ram.getUint8(I+2), 1);
+    });    
+  });
+  
   });
 
 }  
