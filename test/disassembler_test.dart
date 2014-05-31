@@ -1,7 +1,6 @@
-import 'package:unittest/unittest.dart'; 
-import 'package:chip8/chip8.dart';
+part of chip8_test;
 
-main() {
+test_disassembler() {
   var disasm;
   
   group('Chip-8 disassembler:', () {
@@ -153,8 +152,8 @@ main() {
     
     // 0x9nnn
     
-    test("Disassembler decodes SNE", () {
-      expect(disasm.decode(0x9AB0), Mnemonics.SNE);
+    test("Disassembler decodes SNEREGISTER", () {
+      expect(disasm.decode(0x9AB0), Mnemonics.SNEREGISTER);
       expect(disasm.X, 0xA);      
       expect(disasm.Y, 0xB);
     });
@@ -205,8 +204,8 @@ main() {
     // 0xFxkk
     
     test("Disassembler decodes LDDT", () {
-      expect(disasm.decode(0xFE07), Mnemonics.LDDT);
-      expect(disasm.X, 0xE);
+      expect(disasm.decode(0xF507), Mnemonics.LDDT);
+      expect(disasm.X, 0x5);
     });
     
     test("Disassembler decodes LDKEY", () {

@@ -43,7 +43,7 @@ class Disassembler {
       case 8: return decodeEightCode(opcode);
       case 9: 
         assert(N == 0);
-        return Mnemonics.SNE;
+        return Mnemonics.SNEREGISTER;
       case 0xA: return Mnemonics.LDINSTR;
       case 0xB: return Mnemonics.JPREL;
       case 0xC: return Mnemonics.RND;

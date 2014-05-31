@@ -34,7 +34,7 @@ class Mnemonics {
     static const SUBN = const Mnemonics._internal('SUBN');
     static const SHL = const Mnemonics._internal('SHL');
     
-    static const SNE = const Mnemonics._internal('SNE');
+    static const SNEREGISTER = const Mnemonics._internal('SNEREGISTER');
     
     static const LDINSTR = const Mnemonics._internal('LDINSTR');
     

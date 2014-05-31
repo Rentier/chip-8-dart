@@ -5,6 +5,8 @@ class Interpreter {
   
   Disassembler disasm;
   
+  Display display;
+  
   /*
    * Storage place for the 4 nibbles which represent
    * an decoded opcode
@@ -18,7 +20,7 @@ class Interpreter {
    *  where the original interpreter was located, and should 
    *  not be used by programs.
    */
-  ByteBuffer ram;
+  ByteData ram;
   
   /*
    * Chip-8 has 16 general purpose 8-bit registers, 
@@ -38,13 +40,13 @@ class Interpreter {
    * The delay timer is active whenever the delay 
    * timer register (DT) is non-zero.
    */
-  int delayTimerRegister;
+  int delayTimer;
   
   /*
    * The sound timer is active whenever the sound 
    * timer register (ST) is non-zero.
    */
-  int soundTimerRegister;
+  int soundTimer;
   
   /*
    *  Stores the currently executing address
@@ -57,19 +59,56 @@ class Interpreter {
    */
   int stackPointer;
   
+  List<bool> keys;
+  
   InstanceMirror mirror;
+  
+  static Random rng = new Random();
+  
+  static final List<int> CHIP8_FONTSET = [ 
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+  ];
   
   Interpreter() {
     disasm = new Disassembler();
-    ram = new Uint16List(4096).buffer;
+    display = new Display();
+    
+    initRam();    
+
     registers = new Uint8ClampedList(16);
+    
+    keys = new List<bool>.filled(16, false);
+    
     iRegister = 0;    
-    delayTimerRegister = 0;
-    soundTimerRegister = 0;
+    delayTimer = 0;
+    soundTimer = 0;
     programCounter = 0;
     stackPointer = 0;
     mirror = reflect(this);
-  }  
+  }
+  
+  initRam() {
+    var ram_buffer = new Uint16List(4096).buffer;
+    ram = new ByteData.view(ram_buffer);
+    for(int i = 0; i < CHIP8_FONTSET.length; i++) {
+      ram.setUint8(i, CHIP8_FONTSET[i]);
+    }
+  }
   
   void exec(int opcode) {
     Mnemonics m = disasm.decode(opcode);
@@ -89,6 +128,14 @@ class Interpreter {
     return disasm.Y;
   }
   
+  int n() {
+    return disasm.N;
+  }
+  
+  int nnn() {
+    return disasm.NNN;
+  }
+  
   int Vx() {
     return registers[x()];  
   }
@@ -104,11 +151,25 @@ class Interpreter {
   void skip_instruction(){
     programCounter += 2;
   }
+  
+  // Make randomness easily testable by overriding this function
+  var get_random_byte = () { return rng.nextInt(0xFF + 1); }; 
+  
+  List<bool> getBits(int byte) {
+    List<bool> bits = new List<bool>(8);
+    int mask = 0x01;
+    for(int i = 0; i < 8; i++) {
+      var bit = (byte & mask) >> i;
+      bits[i] = bit == 0 ? false : true;
+      mask <<= 1;
+    }
+    return bits;
+  }
 
   // 0x1NNN
 
-  /*
-   * Jump to location nnn.
+  /**
+   * Jump to a machine code routine at nnn.
    */
   void handle_JPABS() {
     programCounter = disasm.NNN;
@@ -213,7 +274,124 @@ class Interpreter {
     registers[0xF] = registers[x()] > registers[y()] ? 1 : 0;
     registers[x()] = registers[x()] - registers[y()];
   }
-
-
   
+  /**
+   * Set Vx = Vx >> 1.
+   */
+  void handle_SHR() {    
+    registers[0xF] = registers[x()] & 0x1;
+    registers[x()] = registers[x()] ~/ 2;
+  }
+  
+  /**
+   * Set Vx = Vy - Vx, set VF = NOT borrow.
+   */
+  void handle_SUBN() {
+    registers[0xF] = registers[y()] > registers[x()] ? 1 : 0;
+    registers[x()] = registers[y()] - registers[x()];
+  }
+  
+  /**
+   * Set Vx = Vx << 1.
+   */
+  void handle_SHL() {   
+    registers[0xF] = (registers[x()] & 0x80) == 0 ? 0 : 1; // 1000 0000
+    registers[x()] = registers[x()] * 2;
+  }
+  
+  // 0x9nnn 
+  
+  /**
+   * Skip next instruction if Vx != Vy.
+   */
+  void handle_SNEREGISTER() {
+    if(Vx() != Vy()) {
+      skip_instruction();
+    }
+  }
+  
+  // 0xAnnn 
+  
+  /**
+   * Set I = nnn.
+   */
+  void handle_LDINSTR() {
+    iRegister = nnn();
+  } 
+  
+  // 0xBnnn 
+  
+  /**
+   * Set I = nnn.
+   */
+  void handle_JPREL() {
+    programCounter = nnn() + registers[0];
+  }
+  
+  // 0xCnnn 
+  
+  /**
+   * Set Vx = random byte AND kk.
+   */
+  void handle_RND() {
+    registers[Vx()] = get_random_byte() & kk();
+  }
+  
+  // 0xDnnn
+  
+  /**
+   * Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+   */
+  void handle_DRW() {
+    for(int y = 0; y < n(); y++) {
+      int b = ram.getUint8(iRegister + y);
+      List<bool> bits = getBits(b);
+      
+      for(int x = 0; x < 8; x++) {
+        if(bits[x]) display.togglePixel(Vx() + x, y + Vy());
+      }
+      
+    }
+  }
+  
+  // 0xENNN
+  
+  /**
+   * Skip next instruction if key with the value of Vx is pressed.
+   */
+  void handle_SKP() {
+    if(keys[Vx()]) {
+      skip_instruction();
+    }
+  }
+  
+  /**
+   * Skip next instruction if key with the value of Vx is not pressed.
+   */
+  void handle_SKNP() {
+    if(!keys[Vx()]) {
+      skip_instruction();
+    }
+  }
+  
+  /**
+  * Set Vx = delay timer value.
+  */
+  void handle_LDDT() {
+    registers[x()] = delayTimer;
+  }
+  
+  /**
+  * Set delay timer = Vx.
+  */
+  void handle_SETDT() {
+    delayTimer = Vx();
+  }
+  
+  /**
+  * Set sound timer = Vx.
+  */
+  void handle_SETSOUND() {
+    soundTimer = Vx();  
+  }
 }
