@@ -469,6 +469,32 @@ test_interpreter() {
     });    
   });
   
+  group('should handle PUSH', () {    
+    test("write values in registers and push them", () {
+      int A = 0x42, 
+          B = 0x23, 
+          C = 0xAB,
+          D = 0x01,
+          I = 0x200;      
+      
+      interpreter.iRegister = I;
+      interpreter.registers[0] = A;
+      interpreter.registers[1] = B;
+      interpreter.registers[2] = C;
+      interpreter.registers[3] = D;
+      
+      interpreter.exec(0xF355);
+      
+      expect(interpreter.ram.getUint8(I), A);
+      expect(interpreter.ram.getUint8(I+1), B);
+      expect(interpreter.ram.getUint8(I+2), C);
+      expect(interpreter.ram.getUint8(I+3), D);
+      
+      
+      
+    });  
+  });
+  
   });
 
 }  

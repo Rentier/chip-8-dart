@@ -414,16 +414,13 @@ class Interpreter {
     List<int> bcd = new List<int>(3);
     
     int x = Vx();
-    print("Foo");
-    print(x);
     
     int i = DIGITS-1;
     int v = VMAX;
-    while (i > 0)
-    {
+    
+    while (i > 0) {
         bcd[i] = 0;
-        while (x >= v)
-        {
+        while (x >= v) {
             x = x - v;
             bcd[i] = bcd[i] + 1;
         }
@@ -431,10 +428,19 @@ class Interpreter {
         i = i - 1;
     }
     bcd[0] = x;
-    print(bcd);
     
     ram.setUint8(iRegister,     bcd[0]);
     ram.setUint8(iRegister + 1, bcd[1]);
     ram.setUint8(iRegister + 2, bcd[2]);
   }
+
+  /**
+   * Store registers V0 through Vx in memory starting at location I.
+   */
+  void handle_PUSH() {   
+    for(int i = 0; i <= x(); i++) {
+      ram.setUint8(iRegister + i, registers[i]);  
+    }
+  }
+  
 }
