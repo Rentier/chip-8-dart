@@ -53,6 +53,8 @@ class Interpreter {
    */
   int stackPointer;
   
+  Mnemonics m;
+  
   List<bool> keys;
   
   InstanceMirror mirror;
@@ -78,11 +80,14 @@ class Interpreter {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
   ];
   
+  static int HEX = 16;
+  
   Interpreter() {
     disasm = new Disassembler();
     display = new Display();
     
-    initRam();    
+    initRam();  
+    initStack();
 
     registers = new Uint8ClampedList(16);
     
@@ -92,19 +97,31 @@ class Interpreter {
     delayTimer = 0;
     soundTimer = 0;
     programCounter = 0;
-    stackPointer = 0;
+    
     mirror = reflect(this);
   }
   
   initRam() {
     ram = new Uint8List(4096);
     for(int i = 0; i < CHIP8_FONTSET.length; i++) {
-      ram[i] =  CHIP8_FONTSET[i];
+      ram[i] = CHIP8_FONTSET[i];
     }
   }
   
+  initStack() {
+    stackPointer = 0;  
+  }
+  
+  loadRom(Uint8List rom) {
+    for(int i = 0; i < rom.length; i++) {
+      ram[0x200 + i] = rom[i];
+      print(m.toString() + " " + rom[i].toRadixString(16));
+    }
+    programCounter = 0x200;
+  }
+  
   void exec(int opcode) {
-    Mnemonics m = disasm.decode(opcode);
+    m = disasm.decode(opcode);
     Symbol s = new Symbol(getMethodName(m));
     mirror.invoke(s, []);
   }
@@ -112,6 +129,18 @@ class Interpreter {
   String getMethodName(Mnemonics m) {
     return "handle_" + m._value;
   }
+  
+  void stepForward() {
+    int opcode = ram[pc()] << 8;
+    opcode += ram[pc() + 1];
+    print(opcode.toRadixString(HEX));
+    exec(opcode);
+    programCounter += 2;
+  }
+  
+  /*
+   * Getter Candy
+   */
   
   int x() {
     return disasm.X;
@@ -141,6 +170,14 @@ class Interpreter {
     return disasm.KK;
   }
   
+  int pc() {
+    return programCounter;
+  }
+  
+  /*
+   * 
+   */
+  
   void skip_instruction(){
     programCounter += 2;
   }
@@ -148,6 +185,9 @@ class Interpreter {
   // Make randomness easily testable by overriding this function
   var get_random_byte = () { return rng.nextInt(0xFF + 1); }; 
   
+  /**
+   * Returns list of bits of a byte 
+   */
   List<bool> getBits(int byte) {
     List<bool> bits = new List<bool>(8);
     int mask = 0x01;
@@ -157,6 +197,12 @@ class Interpreter {
       mask <<= 1;
     }
     return bits;
+  }
+  
+  // 0x0NNN
+  
+  void handle_SYS() {
+     programCounter = disasm.NNN;
   }
 
   // 0x1NNN
@@ -205,7 +251,7 @@ class Interpreter {
   
   // 0x6NNN
   
-  /*
+  /**
    * Set Vx = kk.
    */
   void handle_LDBYTE() {

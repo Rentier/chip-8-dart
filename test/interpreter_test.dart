@@ -13,18 +13,18 @@ test_interpreter() {
     interpreter = null;
   });
   
-  group('Util', () {
-    
+  group('Util', () {    
     group('Should split byte into bits', () {
+      bool L = false, H = true;
       test("0x3C", () {
         // 0x3C   00111100
-        List<bool> expectedBits = [false,false,true,true,true,true,false,false];
+        List<bool> expectedBits = [L,L,H,H,H,H,L,L];
         expect(interpreter.getBits(0x3C), equals(expectedBits));
       });      
       
       test("0xC3", () {
         // 0xC3   11000011
-        List<bool> expectedBits = [true,true,false,false,false,false,true,true];
+        List<bool> expectedBits = [H,H,L,L,L,L,H,H];
         expect(interpreter.getBits(0xC3), equals(expectedBits));
       });
       
@@ -33,16 +33,20 @@ test_interpreter() {
     
   // 0x0nnn
     
-  skip_group('0x0NNN', () {
+  group('0x0NNN', () {
+    
+    test("Interpreter handles SYS", () {
+      interpreter.exec(0x0137);
+      expect(interpreter.programCounter, 0x137);
+    });
   
-    test("Interpreter handles CLS", () {
+    skip_test("Interpreter handles CLS", () {
       fail("nye");
     });
     
-    test("Interpreter handles RET", () {
+    skip_test("Interpreter handles RET", () {
       fail("nye");
-    });
-  
+    });  
   });
   
   group('0x1NNN', () {
