@@ -40,21 +40,41 @@ test_interpreter() {
       expect(interpreter.programCounter, 0x137);
     });
   
-    skip_test("Interpreter handles CLS", () {
-      fail("nye");
+    test("Interpreter handles CLS", () {
+      interpreter.display.togglePixel(42, 13);
+      interpreter.exec(0x00E0);
+      expect(interpreter.display.pixelIsSet(42, 13), false);
     });
     
-    skip_test("Interpreter handles RET", () {
-      fail("nye");
-    });  
+    test("Interpreter handles RET", () {
+      interpreter.stackPointer = 1;
+      interpreter.stack[1] = 0x42;
+      interpreter.exec(0x00EE);
+      expect(interpreter.programCounter, 0x42);
+    }); 
   });
+  
+  // 0x1nnn
   
   group('0x1NNN', () {
   
     test("Interpreter handles JPABS", () {
       interpreter.exec(0x1ABC);
       expect(interpreter.programCounter, 0xABC);
-    });
+    }); 
+  });
+  
+// 0x1nnn
+
+  group('0x2NNN', () {
+  
+   test("Interpreter handles CALL", () {
+     interpreter.programCounter = 0x42;
+     interpreter.exec(0x2ABC); // Call function at 0xABC
+     expect(interpreter.programCounter, 0xABC);
+     expect(interpreter.stackPointer, 1);
+     expect(interpreter.stack[1], 0x42);
+   });
   
   });
   
@@ -146,6 +166,12 @@ test_interpreter() {
         interpreter.exec(0x7302);
         expect(interpreter.registers[3], 3);
       });
+      
+      test("255 + 1 -> V3", () {
+        interpreter.registers[3] = 0xFF;
+        interpreter.exec(0x7301);
+        expect(interpreter.registers[3], 0);
+      });
     
     }); 
   
@@ -208,7 +234,7 @@ test_interpreter() {
       interpreter.registers[0] = 0xFF;
       interpreter.registers[1] = 0x2;
       interpreter.exec(0x8014);
-      expect(interpreter.registers[0], 0xFF);
+      expect(interpreter.registers[0], 0x1);
       expect(interpreter.registers[0xF], 1);
     });
   
@@ -227,7 +253,7 @@ test_interpreter() {
       interpreter.registers[0] = 0x1;
       interpreter.registers[1] = 0x3;
       interpreter.exec(0x8015);
-      expect(interpreter.registers[0], 0);
+      expect(interpreter.registers[0], 0xFE);
       expect(interpreter.registers[0xF], 0);
     });  
   });
@@ -261,7 +287,7 @@ test_interpreter() {
       interpreter.registers[0] = 0x3;
       interpreter.registers[1] = 0x2;
       interpreter.exec(0x8017);
-      expect(interpreter.registers[0], 0);
+      expect(interpreter.registers[0], 0xFF);
       expect(interpreter.registers[0xF], 0);
     });  
   });
@@ -277,7 +303,7 @@ test_interpreter() {
     test("Overflow: V0(0xFF) << 1 -> V0", () {
       interpreter.registers[0] = 0xFF;
       interpreter.exec(0x800E);
-      expect(interpreter.registers[0], 0xFF);
+      expect(interpreter.registers[0], 0xFE);
       expect(interpreter.registers[0xF], 1);
     });    
   });
@@ -453,9 +479,10 @@ test_interpreter() {
     });    
   });  
   
-  skip_group('should handle LDSPRITE', () {    
-    test("should be tested", () {
-      fail('Not yet implemented');
+  group('should handle LDSPRITE', () {    
+    test("should handle  LDSPRITE", () {
+      interpreter.exec(0xFA29); // Load position of 'A' char      
+      expect(interpreter.iRegister, 50);
     });  
   });
   

@@ -21,7 +21,7 @@ class Interpreter {
    * usually referred to as Vx, where x is a 
    * hexadecimal digit (0 through F).
    */
-  Uint8ClampedList registers;
+  Uint8List registers;
   
   /*
    * There is also a 16-bit register called I. This register 
@@ -46,6 +46,12 @@ class Interpreter {
    *  Stores the currently executing address
    */
   int programCounter;
+  
+  /*
+   * The stack is an array of 16 16-bit values, used to store the address 
+   * that the interpreter shoud return to when finished with a subroutine.
+   */
+  Uint16List stack;
   
   /*
    * The stack pointer is used to point to the 
@@ -89,7 +95,8 @@ class Interpreter {
     initRam();  
     initStack();
 
-    registers = new Uint8ClampedList(16);
+    registers = new Uint8List(16);
+    stack = new Uint16List(16);
     
     keys = new List<bool>.filled(16, false);
     
@@ -97,6 +104,7 @@ class Interpreter {
     delayTimer = 0;
     soundTimer = 0;
     programCounter = 0;
+    stackPointer = 0;
     
     mirror = reflect(this);
   }
@@ -115,7 +123,7 @@ class Interpreter {
   loadRom(Uint8List rom) {
     for(int i = 0; i < rom.length; i++) {
       ram[0x200 + i] = rom[i];
-      print(m.toString() + " " + rom[i].toRadixString(16));
+      //print(m.toString() + " " + rom[i].toRadixString(16));
     }
     programCounter = 0x200;
   }
@@ -133,9 +141,18 @@ class Interpreter {
   void stepForward() {
     int opcode = ram[pc()] << 8;
     opcode += ram[pc() + 1];
-    print(opcode.toRadixString(HEX));
+
     exec(opcode);
-    programCounter += 2;
+    if(hasToIncrement()) programCounter += 2;
+    
+    delayTimer -= max(delayTimer - 1, 0);
+  }
+  
+  bool hasToIncrement() {
+    List l = [Mnemonics.JPABS,
+              Mnemonics.CALL,
+              Mnemonics.JPREL];
+    return ! l.contains(m);
   }
   
   /*
@@ -204,6 +221,15 @@ class Interpreter {
   void handle_SYS() {
      programCounter = disasm.NNN;
   }
+  
+  void handle_CLS() {
+    display.clear();
+  }
+  
+  void handle_RET() {
+    programCounter = stack[stackPointer];
+    stackPointer -= 1;    
+  }  
 
   // 0x1NNN
 
@@ -215,6 +241,12 @@ class Interpreter {
   }
   
   // 0x2NNN
+  
+  void handle_CALL() {
+    stackPointer += 1;
+    stack[stackPointer] = programCounter;
+    programCounter = nnn();
+  }
   
   // 0x3NNN
   
@@ -383,11 +415,12 @@ class Interpreter {
    */
   void handle_DRW() {
     for(int y = 0; y < n(); y++) {
-      int b = ram[iRegister + y];
-      List<bool> bits = getBits(b);
-      
+      int pixel = ram[iRegister + y];
+            
       for(int x = 0; x < 8; x++) {
-        if(bits[x]) display.togglePixel(Vx() + x, y + Vy());
+        if((pixel & (0x80 >> x)) != 0) {
+          display.togglePixel(Vx() + x, y + Vy());
+        }
       }
       
     }
@@ -440,6 +473,13 @@ class Interpreter {
   void handle_ADDI() {    
     iRegister += Vx();  
   }  
+  
+  /**
+   * Set I = location of sprite for digit Vx.
+   */
+  void handle_LDSPRITE() {
+    iRegister = x() * 5;
+  }
 
   /**
    * Store BCD representation of Vx in memory locations I, I+1, and I+2.

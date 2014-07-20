@@ -43,11 +43,13 @@ void main() {
     interpreter.exec(0xD005);
     
     int counter = 0;
+    
+    display.clear();
   
-    new Timer.periodic(new Duration(milliseconds:100), (_) {
+    new Timer.periodic(new Duration(milliseconds:16), (_) {
       interpreter.stepForward();
       drawDisplay(context, interpreter.display, pixelSize);
-      element.text = "0x" + interpreter.programCounter.toRadixString(16) + " " + interpreter.m.toString();
+      //element.text = "0x" + interpreter.programCounter.toRadixString(16) + " " + interpreter.m.toString();
 
     });
   });
